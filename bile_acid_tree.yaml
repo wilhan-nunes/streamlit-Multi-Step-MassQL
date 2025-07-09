@@ -1,0 +1,32 @@
+# This yaml file reflects the query hierarchy used to classify each potential bile acid
+# The code will generate all possible combinations of paths in the "bile acid tree"
+# and then compare the matches in the MassQL table for each compound with all possible validation
+# paths to assign the possible bile acid isomer.
+# The tree can be modified, but the massql_queries.yaml file should also reflect the changes for classes/isomers for
+# it to work properly. Make sure to maintain naming consistent across this two files.
+
+Monohydroxy:
+  Monohydroxy_stage1:
+    Mono-3a-OH: {}
+    Mono-7b-OH: {}
+Dihydroxy:
+  Dihydroxy_stage1:
+    Di-1-ketone: {}
+    Di-3,12a-OH|Di-7,12a-OH:
+      Di-3,12a-OH: {}
+      Di-7,12a-OH: {}
+    Di-3,7-OH|Di-3,6-OH|Di-3,12b-OH|Di-7,12b-OH:
+      Di-3,7-OH|Di-3,12b-OH|Di-7,12b-OH:
+        Di-3,7-OH: {}
+        Di-3,12b-OH|Di-7,12b-OH: {}
+      Di-3,6-OH: {}
+Trihydroxy:
+  Trihydroxy_stage1:
+    Tri-All_ketone_NEW:
+      Tri-3k_7or12_OH: {}
+      Tri-3a_12k: {}
+    Tri-3,6,7_NEW:
+      Tri-3,6b,7a-OH|Tri-3,6a,7b-OH:
+        Tri-3,6b,7a-OH: {}
+      Tri-3,6a,7a-OH: {}
+    Tri-3,7a,12a-OH_NEW: {}

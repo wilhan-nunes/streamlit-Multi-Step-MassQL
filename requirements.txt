@@ -1,0 +1,12 @@
+git+https://github.com/Wang-Bioinformatics-Lab/GNPSDataPackage.git
+streamlit
+requests
+pandas
+massql
+pyyaml
+gnpsdata
+networkx
+plotly
+numpy
+matplotlib
+seaborn
