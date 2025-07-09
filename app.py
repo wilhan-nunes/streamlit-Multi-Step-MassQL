@@ -14,6 +14,7 @@ from utils import (
     filter_mgf_by_scans,
     MassQLQueries,
     bile_acid_tree,
+    add_df_and_filtering
 )
 from tree_plotter import create_custom_tree
 from tree_classifier import check_classification_paths
@@ -105,14 +106,14 @@ def cleanup_massql_files():
 def load_example_data():
     if "only_library_matches" not in st.session_state:
         st.session_state.only_library_matches = pd.read_csv(
-            "examples/example_library_matches.csv"
+            "examples/example_library_matches.csv", dtype=str
         )
     if "all_query_results_df" not in st.session_state:
-        st.session_state.all_query_results_df = pd.read_csv("examples/example_all_results.csv")
+        st.session_state.all_query_results_df = pd.read_csv("examples/example_all_results.csv", dtype=str)
     if "library_and_query_results" not in st.session_state:
         st.session_state.library_and_query_results = pd.read_csv(
-            "examples/example_lib_and_query_results.csv"
-        ).astype(str)
+            "examples/example_lib_and_query_results.csv", dtype=str
+        ).fillna("No match")
 
 
 def get_bile_acids_classifications(results_df):
@@ -244,8 +245,8 @@ if run_query or st.session_state.get("run_query_done"):
     feature_ids_dict = feature_ids_dict.set_index("#Scan#")["Compound_Name"].to_dict()
     feature_ids_dict = dict(sorted(feature_ids_dict.items(), key=lambda item: item[1]))
 
-    viz_tab, lib_tab, full_tab = st.tabs(
-        ["👓 Visualizations", "📚 Library Matches", "📋 Full Table",]
+    viz_tab, class_tab, lib_tab, full_tab = st.tabs(
+        ["👓 Visualizations", "🗂️ Classified", "📚 Library Matches", "📋 Full Table",]
     )
 
     with viz_tab:
@@ -272,9 +273,16 @@ if run_query or st.session_state.get("run_query_done"):
             ba_tree_fig = create_custom_tree(selected_classification, selected_feature)
             st.plotly_chart(ba_tree_fig)
 
-    with lib_tab:
-        from utils import add_df_and_filtering
+    with class_tab:
+        default_cols = ["#Scan#", "Compound_Name", 'classification', 'query_validation']
+        add_df_and_filtering(filtered_classifications, key_prefix="class_table", default_cols=default_cols)
+        with st.expander("How to interpret this table"):
+            st.markdown("""
+            The **"classification"** column displays the queries that support the compound's annotation as the most likely isomer.  
+            The **"query_validation"** column lists all queries that matched a given compound.
+            """)
 
+    with lib_tab:
         add_df_and_filtering(only_library_matches, key_prefix="lib_matches")
 
     with full_tab:

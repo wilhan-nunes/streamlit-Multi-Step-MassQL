@@ -120,7 +120,7 @@ def filter_mgf_by_scans(input_mgf_path, output_mgf_path, scans_to_keep):
     return output_mgf_path
 
 
-def add_df_and_filtering(df, key_prefix:str):
+def add_df_and_filtering(df, key_prefix:str, default_cols: List = None):
     # Session state for tracking number of filters
     if f"{key_prefix}_filter_count" not in st.session_state:
         st.session_state[f"{key_prefix}_filter_count"] = 1
@@ -157,7 +157,14 @@ def add_df_and_filtering(df, key_prefix:str):
     # Show result
     st.markdown("### 🔎 Filtered Results")
     st.write(f"Total results: {len(filtered_df)}")
-    st.dataframe(filtered_df)
+    all_cols = df.columns
+    if default_cols:
+        with st.expander('Cols to show'):
+            cols_to_show = st.multiselect("Columns to show", options=all_cols, default=default_cols,
+                                          label_visibility='collapsed')
+    else:
+        cols_to_show = all_cols
+    st.dataframe(filtered_df[cols_to_show])
 
 
 if __name__ == "__main__":
