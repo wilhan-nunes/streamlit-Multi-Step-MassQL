@@ -252,6 +252,8 @@ if run_query or st.session_state.get("run_query_done"):
         ["👓 Visualizations", "🗂️ Classified", "📚 Library Matches", "📋 Full Table",]
     )
 
+    default_cols = ["#Scan#", "Compound_Name", 'classification', 'query_validation']
+
     with viz_tab:
         st.subheader("Feature Classification")
         selected_feature = st.selectbox(
@@ -277,7 +279,6 @@ if run_query or st.session_state.get("run_query_done"):
             st.plotly_chart(ba_tree_fig)
 
     with class_tab:
-        default_cols = ["#Scan#", "Compound_Name", 'classification', 'query_validation']
         add_df_and_filtering(filtered_classifications, key_prefix="class_table", default_cols=default_cols)
         with st.expander("How to interpret this table"):
             st.markdown("""
@@ -286,7 +287,11 @@ if run_query or st.session_state.get("run_query_done"):
             """)
 
     with lib_tab:
+        only_library_matches = only_library_matches.merge(filtered_classifications[['#Scan#', 'classification']], on='#Scan#', how='left')
+        only_library_matches = only_library_matches[default_cols + [col for col in only_library_matches.columns if col not in default_cols]]
         add_df_and_filtering(only_library_matches, key_prefix="lib_matches")
 
     with full_tab:
+        full_table = full_table.merge(filtered_classifications[['#Scan#', 'classification']], on='#Scan#', how='left')
+        full_table = full_table[default_cols + [col for col in full_table.columns if col not in default_cols]]
         add_df_and_filtering(full_table, key_prefix="full")
