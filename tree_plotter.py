@@ -81,6 +81,7 @@ class BileAcidTreeVisualizer:
                 align="left",
             ),
             link=dict(
+                arrowlen=15,
                 source=[link['source'] for link in links],
                 target=[link['target'] for link in links],
                 value=[link['value'] for link in links],
