@@ -43,7 +43,17 @@ st.set_page_config(
 )
 
 
-def process_results(massql_results_df: List):
+def process_results(massql_results_df: List, library_matches: pd.DataFrame, all_scans: List[str]):
+    """
+    Process results and include scans without library matches in full_table output.
+
+    Args:
+        massql_results_df: List of MassQL results
+        library_matches: DataFrame with library matches
+        all_scans: List of all scan numbers as strings
+    """
+
+    # Process MassQL results
     all_query_results_df = pd.DataFrame(massql_results_df)
     all_query_results_df["scan_list"] = all_query_results_df["scan_list"].apply(
         lambda x: ast.literal_eval(x) if isinstance(x, str) else x
@@ -54,44 +64,37 @@ def process_results(massql_results_df: List):
     )
 
     with st.spinner("Merging results..."):
+        # Ensure consistent data types
         all_query_results_df["#Scan#"] = all_query_results_df["#Scan#"].astype(str)
         library_matches["#Scan#"] = library_matches["#Scan#"].astype(str)
 
-        library_and_query_results = pd.merge(
-            library_matches, all_query_results_df, on="#Scan#", how="outer"
-        )
+        # Create complete scan list DataFrame
+        all_scans_df = pd.DataFrame({"#Scan#": [str(scan) for scan in all_scans]})
 
-        library_matches_only = pd.merge(
-            library_matches, all_query_results_df, on="#Scan#", how="left"
-        )
-        fallback_label = "Did not pass any selected query"
-        library_and_query_results["query_validation"] = library_and_query_results[
-            "query_validation"
-        ].fillna(fallback_label)
+        # Merge everything: all_scans -> library_matches -> query_results
+        full_table = (all_scans_df
+                      .merge(library_matches, on="#Scan#", how="left")
+                      .merge(all_query_results_df, on="#Scan#", how="left"))
 
-        library_and_query_results = library_and_query_results[
-            ["query_validation", "Compound_Name"]
-            + [
-                col
-                for col in library_and_query_results.columns
-                if col not in ["query_validation", "Compound_Name"]
-            ]
-        ]
+        # Fill missing values
+        full_table["query_validation"] = full_table["query_validation"].fillna("Did not pass any selected query")
 
-        library_and_query_results = library_and_query_results.groupby(
-            "#Scan#", as_index=False
-        ).agg(
-            {
-                "query_validation": lambda x: ";".join(set(x)),
-                **{
-                    col: "first"
-                    for col in library_and_query_results.columns
-                    if col not in ["#Scan#", "query_validation"]
-                },
-            }
-        )
+        # Library matches only (existing functionality)
+        library_matches_only = library_matches.merge(all_query_results_df, on="#Scan#", how="left")
 
-    return library_matches_only, library_and_query_results, all_query_results_df
+        # Reorder columns and aggregate
+        cols = ["query_validation", "Compound_Name"] + [col for col in full_table.columns
+                                                        if col not in ["query_validation", "Compound_Name"]]
+        full_table = full_table[cols]
+
+        # Group by scan and aggregate
+        full_table = full_table.groupby("#Scan#", as_index=False).agg({
+            "query_validation": lambda x: ";".join(set(x.dropna())),
+            **{col: "first" for col in full_table.columns
+               if col not in ["#Scan#", "query_validation"]}
+        })
+
+    return library_matches_only, full_table, all_query_results_df
 
 
 def cleanup_massql_files():
@@ -110,8 +113,8 @@ def load_example_data():
         )
     if "all_query_results_df" not in st.session_state:
         st.session_state.all_query_results_df = pd.read_csv("examples/example_all_results.csv", dtype=str)
-    if "library_and_query_results" not in st.session_state:
-        st.session_state.library_and_query_results = pd.read_csv(
+    if "full_table" not in st.session_state:
+        st.session_state.full_table = pd.read_csv(
             "examples/example_lib_and_query_results.csv", dtype=str
         ).fillna("No match")
 
@@ -159,19 +162,17 @@ with st.sidebar:
     st.subheader("Contributors")
     st.markdown(
         """
-    - [Helena Russo PhD](https://sites.google.com/view/helenamrusso/home) - UC San Diego
-    - [Wilhan Nunes PhD](https://scholar.google.com/citations?user=4cPVoeIAAAAJ) - UC San Diego
     - [Ipsita Mohanty PhD](https://scholar.google.com/citations?user=iHJ3vgsAAAAJ) - UC San Diego
+    - [Wilhan Nunes PhD](https://scholar.google.com/citations?user=4cPVoeIAAAAJ) - UC San Diego
+    - [Helena Russo PhD](https://sites.google.com/view/helenamrusso/home) - UC San Diego
     - [Mingxun Wang PhD](https://www.cs.ucr.edu/~mingxunw/) - UC Riverside
     """
     )
 
     st.subheader("Documentations and Resources")
-    st.write(
-        """<a href="https://cmmc.gnps2.org/network_enrichment/">CMMC Enrichment Workflow</a><br>
-                        <a href="https://wang-bioinformatics-lab.github.io/GNPS2_Documentation/fbmn/">Feature Based Molecular Networking</a><br>
-                        <a href="https://cmmc-kb.gnps2.org" target="_blank">CMMC Knowledge Base</a>""",
-        unsafe_allow_html=True,
+    st.markdown("""
+    [Feature Based Molecular Networking](https://wang-bioinformatics-lab.github.io/GNPS2_Documentation/fbmn/)
+    """
     )
 
 if not run_query and "run_query_done" not in st.session_state:
@@ -183,9 +184,9 @@ if run_query:
     st.session_state["run_query_done"] = True
     st.title("Multi-step MassQL Results")
     if not load_example:
-        with st.spinner("Downloading files and running queries..."):
+        with st.spinner("Downloading files..."):
             library_matches = workflow_fbmn.get_library_match_dataframe(task_id)
-            cleaned_mgf_path, all_scans = download_and_filter_mgf(task_id)
+            cleaned_mgf_path, all_mgf_scans = download_and_filter_mgf(task_id)
             mgf_path = cleaned_mgf_path
 
         with st.spinner("Running Stage 1 queries..."):
@@ -210,22 +211,24 @@ if run_query:
                 massql_results_df = massql_launch.run_massql(
                     stage1_passed_mgf, ALL_MASSQL_QUERIES
                 )
-                (
-                    only_library_matches,
-                    library_and_query_results,
-                    all_query_results_df,
-                ) = process_results(massql_results_df)
 
-                # #TODO:remove later (saving example files)
-                # pd.DataFrame(massql_results_df).to_csv('example_massql_results_after_stg1.csv', index=False)
-                # library_and_query_results.to_csv('example_lib_and_query_resuts.csv', index=False)
-                # only_library_matches.to_csv('example_library_matches.csv', index=False)
-                # all_query_results_df.to_csv('example_all_results.csv', index=False)
+        with st.spinner("Processing tables..."):
+            (
+                only_library_matches,
+                full_table,
+                all_query_results_df,
+            ) = process_results(massql_results_df, library_matches, all_mgf_scans)
+
+            # #TODO:remove later (saving example files)
+            # pd.DataFrame(massql_results_df).to_csv('example_massql_results_after_stg1.csv', index=False)
+            # full_table.to_csv('example_lib_and_query_results.csv', index=False)
+            # only_library_matches.to_csv('example_library_matches.csv', index=False)
+            # all_query_results_df.to_csv('example_all_results.csv', index=False)
 
             cleanup_massql_files()
         # Store results in session state
         st.session_state["only_library_matches"] = only_library_matches
-        st.session_state["library_and_query_results"] = library_and_query_results
+        st.session_state["full_table"] = full_table
         st.session_state["all_query_results_df"] = all_query_results_df
 
     else:
@@ -234,14 +237,14 @@ if run_query:
 
 if run_query or st.session_state.get("run_query_done"):
     only_library_matches = st.session_state["only_library_matches"]
-    library_and_query_results = st.session_state["library_and_query_results"]
-    library_and_query_results["Compound_Name"] = library_and_query_results[
+    full_table = st.session_state["full_table"]
+    full_table["Compound_Name"] = full_table[
         "Compound_Name"
     ].fillna("No match")
 
-    filtered_classifications = get_bile_acids_classifications(library_and_query_results)
-    feature_ids_dict = filtered_classifications[["#Scan#", "Compound_Name"]].astype(str)
+    filtered_classifications = get_bile_acids_classifications(full_table)
 
+    feature_ids_dict = filtered_classifications[["#Scan#", "Compound_Name"]].astype(str)
     feature_ids_dict = feature_ids_dict.set_index("#Scan#")["Compound_Name"].to_dict()
     feature_ids_dict = dict(sorted(feature_ids_dict.items(), key=lambda item: item[1]))
 
@@ -286,4 +289,4 @@ if run_query or st.session_state.get("run_query_done"):
         add_df_and_filtering(only_library_matches, key_prefix="lib_matches")
 
     with full_tab:
-        add_df_and_filtering(library_and_query_results, key_prefix="full")
+        add_df_and_filtering(full_table, key_prefix="full")
