@@ -137,7 +137,7 @@ def get_bile_acids_classifications(results_df):
 
 with st.sidebar:
     st.subheader("Analysis configuration")
-    load_example = st.checkbox("Load query example", value=False)
+    load_example = st.checkbox("Load query example", value=False, key="load_example_checkbox")
     if load_example:
         task_id_value = "4e5f76ebc4c6481aba4461356f20bc35"
     else:
@@ -157,6 +157,7 @@ with st.sidebar:
         ):
             # Reset the session state
             st.session_state.clear()
+            st.session_state.load_example_checkbox = False
             st.rerun()
 
     st.subheader("Contributors")
@@ -182,7 +183,6 @@ if not run_query and "run_query_done" not in st.session_state:
 
 if run_query:
     st.session_state["run_query_done"] = True
-    st.title("Multi-step MassQL Results")
     if not load_example:
         with st.spinner("Downloading files..."):
             library_matches = workflow_fbmn.get_library_match_dataframe(task_id)
@@ -236,6 +236,7 @@ if run_query:
         load_example_data()
 
 if run_query or st.session_state.get("run_query_done"):
+    st.title("Multi-step MassQL Results")
     only_library_matches = st.session_state["only_library_matches"]
     full_table = st.session_state["full_table"]
     full_table["Compound_Name"] = full_table[
