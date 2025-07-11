@@ -76,7 +76,7 @@ class BileAcidTreeVisualizer:
                 pad=15,
                 thickness=20,
                 line=dict(color="black", width=0.5),
-                label=[node['label'] for node in nodes],
+                label=[" <i>or</i> <br>".join(node['label'].split('|')) for node in nodes],
                 color=[node['color'] for node in nodes],
                 align="left",
             ),
