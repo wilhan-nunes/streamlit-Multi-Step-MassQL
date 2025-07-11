@@ -23,7 +23,7 @@ import streamlit as st
 
 massql_queries = MassQLQueries()
 ALL_MASSQL_QUERIES = massql_queries.ALL_MASSQL_QUERIES
-only_stage1 = massql_queries.only_stage1
+stage1 = massql_queries.stage1
 stage2 = massql_queries.stage2
 mono_queries = massql_queries.mono_queries
 di_queries = massql_queries.di_queries
@@ -191,7 +191,7 @@ if run_query:
 
         with st.spinner("Running Stage 1 queries..."):
             stage1_all_results = massql_launch.run_massql(
-                mgf_path, queries_dict=only_stage1
+                mgf_path, queries_dict=stage1
             )
             stage1_results_df = pd.DataFrame(stage1_all_results)
             # create a new mgf filtering to just maintain the scans that passed stage1
@@ -284,7 +284,7 @@ if run_query or st.session_state.get("run_query_done"):
         with st.expander("How to interpret this table"):
             st.markdown("""
             The **"classification"** column displays the queries that support the compound's annotation as the most likely isomer.  
-            The **"query_validation"** column lists all queries that matched a given compound.
+            The **"query_validation"** column lists all queries that matched a given spectra (scan).
             """)
 
     with lib_tab:

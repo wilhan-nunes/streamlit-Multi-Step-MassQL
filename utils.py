@@ -25,7 +25,7 @@ class MassQLQueries:
     with open('massql_queries.yaml', 'r') as file:
         data = yaml.safe_load(file)
     ALL_MASSQL_QUERIES = data['ALL_MASSQL_QUERIES']
-    only_stage1 = {key: value for key, value in ALL_MASSQL_QUERIES.items() if "stage1" in key.lower()}
+    stage1 = {key: value for key, value in ALL_MASSQL_QUERIES.items() if "stage1" in key.lower()}
     stage2 = {key: value for key, value in ALL_MASSQL_QUERIES.items() if "stage2" in key.lower()}
     mono_queries = {key: value for key, value in ALL_MASSQL_QUERIES.items() if "mono" in key.lower()}
     di_queries = {key: value for key, value in ALL_MASSQL_QUERIES.items() if "di" in key.lower()}

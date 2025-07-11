@@ -18,7 +18,7 @@ def welcome_page():
        - The app runs an initial filter on the MGF file using stage 1 queries to remove spectra that do not pass this stage.
        - It then performs a set of secondary, more specific MassQL queries only on the remaining spectra.
     3. **Library Match Integration**: The results from MassQL are merged with GNPS library matches from the FBMN job.
-    4. **Classification**: A bile acid classification tree is used to assign query results to specific bile acid subclasses.
+    4. **Classification**: A bile acid classification tree is used to assign query results to specific bile acid subclasses/isomers.
     
     ## Features
     - 👓 Visual classification of features using an interactive bile acid ontology tree

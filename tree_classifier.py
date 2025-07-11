@@ -48,6 +48,7 @@ def check_classification_paths(matches, classification_tree):
     }
 
     for path in all_paths:
+        # here with path[1:] we remove the first element of path (isomer class name)
         if set(path[1:]).issubset(set(matches)):
             results['satisfied_paths'].append(path)
         else:
