@@ -10,3 +10,4 @@ plotly
 numpy
 matplotlib
 seaborn
+matchms==0.21.1
