@@ -27,11 +27,12 @@ class BileAcidTreeVisualizer:
                 else:
                     # Different colors for different levels
                     level_colors = [
-                        'rgba(78, 205, 196, 0.8)',   # Teal - root level
-                        'rgba(255, 183, 77, 0.8)',   # Orange - stage level
-                        'rgba(129, 236, 236, 0.8)',  # Light blue - intermediate
-                        'rgba(255, 218, 185, 0.8)',  # Peach - specific compounds
-                        'rgba(162, 155, 254, 0.8)',  # Purple - final level
+                        'rgba(46, 125, 50, 0.8)',    # Forest green - root level
+                        'rgba(0, 150, 136, 0.8)',    # Teal - stage level
+                        'rgba(3, 169, 244, 0.8)',    # Light blue - intermediate
+                        'rgba(63, 81, 181, 0.8)',    # Indigo - specific compounds
+                        'rgba(156, 39, 176, 0.8)',   # Purple -
+                        'rgba(233, 30, 99, 0.8)',    # Pink - final level
                     ]
                     color = level_colors[min(level, len(level_colors)-1)]
 
