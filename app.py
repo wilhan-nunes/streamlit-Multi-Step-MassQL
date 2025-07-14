@@ -54,7 +54,12 @@ def process_results(massql_results_df: List, library_matches: pd.DataFrame, all_
     """
 
     # Process MassQL results
-    all_query_results_df = pd.DataFrame(massql_results_df)
+    if isinstance(massql_results_df, list):
+        all_query_results_df = pd.DataFrame(massql_results_df)
+    elif isinstance(massql_results_df, pd.DataFrame):
+        all_query_results_df = massql_results_df
+    else:
+        raise
     all_query_results_df["scan_list"] = all_query_results_df["scan_list"].apply(
         lambda x: ast.literal_eval(x) if isinstance(x, str) else x
     )
