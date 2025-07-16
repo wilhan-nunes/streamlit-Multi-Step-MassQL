@@ -77,7 +77,7 @@ def process_results(massql_results_df: List, library_matches: pd.DataFrame, all_
                       .merge(all_query_results_df, on="#Scan#", how="left"))
 
         # Fill missing values
-        full_table["query_validation"] = full_table["query_validation"].fillna("Did not pass any selected query")
+        full_table["query_validation"] = full_table["query_validation"].fillna("Did not pass stage1 filtering")
 
         # Library matches only (existing functionality)
         library_matches_only = library_matches.merge(all_query_results_df, on="#Scan#", how="left")
@@ -123,9 +123,9 @@ def load_example_data():
 
 
 
-def get_bile_acids_classifications(results_df):
+def get_bile_acids_classifications(results_df, exclude_string:str):
     passed_queries = results_df[
-        results_df["query_validation"] != "Did not pass any selected query"
+        ~results_df["query_validation"].str.contains(exclude_string, case=False)
     ]
     passed_queries["classification"] = passed_queries["query_validation"].apply(
         lambda x: check_classification_paths(str(x).split(";"), bile_acid_tree)[
@@ -253,7 +253,7 @@ if run_query or st.session_state.get("run_query_done"):
         "Compound_Name"
     ].fillna("No match")
 
-    filtered_classifications = get_bile_acids_classifications(full_table)
+    filtered_classifications = get_bile_acids_classifications(full_table, exclude_string="did not pass")
     if len(filtered_classifications) > 0:
         feature_ids_dict = filtered_classifications[["#Scan#", "Compound_Name"]].astype(str)
         feature_ids_dict = feature_ids_dict.set_index("#Scan#")["Compound_Name"].to_dict()
