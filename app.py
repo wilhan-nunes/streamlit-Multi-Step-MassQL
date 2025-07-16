@@ -33,7 +33,7 @@ tri_queries = massql_queries.tri_queries
 page_title = "Multi-Step MassQL Bile Acid Isomer Annotation"
 
 # TODO: Bump version
-app_version = "2025-07-07"
+app_version = "2025-07-16"
 
 st.set_page_config(
     page_title=page_title,
