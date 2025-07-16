@@ -54,12 +54,7 @@ def process_results(massql_results_df: List, library_matches: pd.DataFrame, all_
     """
 
     # Process MassQL results
-    if isinstance(massql_results_df, list):
-        all_query_results_df = pd.DataFrame(massql_results_df)
-    elif isinstance(massql_results_df, pd.DataFrame):
-        all_query_results_df = massql_results_df
-    else:
-        raise
+    all_query_results_df = pd.DataFrame(massql_results_df)
     all_query_results_df["scan_list"] = all_query_results_df["scan_list"].apply(
         lambda x: ast.literal_eval(x) if isinstance(x, str) else x
     )
@@ -207,7 +202,7 @@ if run_query:
             scans_to_keep = set(sum(stage1_results_df["scan_list"], []))
             stage1_passed_mgf = filter_mgf_by_scans(
                 mgf_path,
-                f"temp_mgf/{uuid.uuid4()}_stg1_passed.mgf",
+                f"temp_mgf/{task_id}_stg1_passed.mgf",
                 scans_to_keep,
             )
 
@@ -230,28 +225,25 @@ if run_query:
         massql_results_df =st.session_state.get('massql_results_df')
         library_matches =st.session_state.get('library_matches')
 
-        with st.spinner("Processing tables..."):
-            (
-                only_library_matches,
-                full_table,
-                all_query_results_df,
-            ) = process_results(massql_results_df, library_matches, all_mgf_scans)
+    with st.spinner("Processing tables..."):
+        (
+            only_library_matches,
+            full_table,
+            all_query_results_df,
+        ) = process_results(massql_results_df, library_matches, all_mgf_scans)
 
-            # #TODO:remove later (saving example files)
-            # pd.DataFrame(massql_results_df).to_csv('example_massql_results_after_stg1.csv', index=False)
-            # full_table.to_csv('example_lib_and_query_results.csv', index=False)
-            # only_library_matches.to_csv('example_library_matches.csv', index=False)
-            # all_query_results_df.to_csv('example_all_results.csv', index=False)
+        # #TODO:remove later (saving example files)
+        # pd.DataFrame(massql_results_df).to_csv('examples/example_massql_results_after_stg1.csv', index=False)
+        # full_table.to_csv('example_lib_and_query_results.csv', index=False)
+        # only_library_matches.to_csv('example_library_matches.csv', index=False)
+        # all_query_results_df.to_csv('example_all_results.csv', index=False)
 
-            cleanup_massql_files()
+
         # Store results in session state
         st.session_state["only_library_matches"] = only_library_matches
         st.session_state["full_table"] = full_table
         st.session_state["all_query_results_df"] = all_query_results_df
 
-    else:
-        # this function stores the static result file dataframes in st.session_state, just as above.
-        load_example_data()
 
 if run_query or st.session_state.get("run_query_done"):
     st.title("Multi-step MassQL Results")
@@ -280,7 +272,7 @@ if run_query or st.session_state.get("run_query_done"):
     with viz_tab:
         st.subheader("Feature Classification")
         selected_feature = st.selectbox(
-            "Select a feature:",
+            f"Select a feature : :blue-badge[{len(feature_ids_dict)} of {len(full_table)}]",
             [f"{v}: {k}" for v, k in feature_ids_dict.items()],
             index=0,
         )
@@ -296,6 +288,10 @@ if run_query or st.session_state.get("run_query_done"):
             )
         else:
             selected_classification = validation_lists
+
+        if len(validation_lists) >=2 and all([lst[-1].endswith("stage2") for lst in validation_lists]):
+            st.warning("This is potentially a chimeric spectrum since it was classified in more than one Stage2 query", icon='❗️')
+
 
         if selected_classification:
             ba_tree_fig = create_custom_tree(selected_classification, selected_feature)
