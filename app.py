@@ -249,10 +249,14 @@ if run_query or st.session_state.get("run_query_done"):
     ].fillna("No match")
 
     filtered_classifications = get_bile_acids_classifications(full_table)
-
-    feature_ids_dict = filtered_classifications[["#Scan#", "Compound_Name"]].astype(str)
-    feature_ids_dict = feature_ids_dict.set_index("#Scan#")["Compound_Name"].to_dict()
-    feature_ids_dict = dict(sorted(feature_ids_dict.items(), key=lambda item: item[1]))
+    if len(filtered_classifications) > 0:
+        feature_ids_dict = filtered_classifications[["#Scan#", "Compound_Name"]].astype(str)
+        feature_ids_dict = feature_ids_dict.set_index("#Scan#")["Compound_Name"].to_dict()
+        feature_ids_dict = dict(sorted(feature_ids_dict.items(), key=lambda item: item[1]))
+    else:
+        st.warning("No classifications retrieved for this task ID. Inspect the full table below for details")
+        st.write(full_table)
+        st.stop()
 
     viz_tab, class_tab, lib_tab, full_tab = st.tabs(
         ["👓 Visualizations", "🗂️ Classified", "📚 Library Matches", "📋 Full Table",]
