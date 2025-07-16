@@ -48,7 +48,7 @@ class BileAcidTreeVisualizer:
                     if highlight_path and key in highlight_path:
                         parent_key = [k for k, v in node_dict.items() if v == parent_idx][0]
                         if parent_key in highlight_path:
-                            link_color = 'rgba(255, 107, 107, 0.8)'  # Red for highlighted links
+                            link_color = 'rgba(255, 107, 107, 0.5)'  # Red for highlighted links
                         else:
                             link_color = 'rgba(200, 200, 200, 0.4)'  # Gray for non-highlighted
                     else:
