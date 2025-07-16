@@ -112,16 +112,20 @@ def cleanup_massql_files():
 
 
 def load_example_data():
-    if "only_library_matches" not in st.session_state:
-        st.session_state.only_library_matches = pd.read_csv(
-            "examples/example_library_matches.csv", dtype=str
-        )
-    if "all_query_results_df" not in st.session_state:
-        st.session_state.all_query_results_df = pd.read_csv("examples/example_all_results.csv", dtype=str)
-    if "full_table" not in st.session_state:
-        st.session_state.full_table = pd.read_csv(
-            "examples/example_lib_and_query_results.csv", dtype=str
-        ).fillna("No match")
+    st.session_state.library_matches = pd.read_csv(
+        "examples/example_library_matches.csv", dtype=str
+    )
+    st.session_state.all_query_results_df = pd.read_csv(
+        "examples/example_all_results.csv", dtype=str
+    )
+    st.session_state.full_table = pd.read_csv(
+        "examples/example_lib_and_query_results.csv", dtype=str
+    ).fillna("No match")
+    with open("examples/example_massql_results_after_stg1.txt", "r") as f:
+        st.session_state.massql_results_df = ast.literal_eval(f.read())
+    with open("examples/example_all_scans.txt", "r") as f:
+        st.session_state.all_scans = [line.strip() for line in f]
+
 
 
 def get_bile_acids_classifications(results_df):
@@ -216,6 +220,15 @@ if run_query:
                 massql_results_df = massql_launch.run_massql(
                     stage1_passed_mgf, ALL_MASSQL_QUERIES
                 )
+
+        cleanup_massql_files()
+
+    else:
+        # this function stores the static result file dataframes in st.session_state, just as above.
+        load_example_data()
+        all_mgf_scans = st.session_state.get('all_scans')
+        massql_results_df =st.session_state.get('massql_results_df')
+        library_matches =st.session_state.get('library_matches')
 
         with st.spinner("Processing tables..."):
             (
