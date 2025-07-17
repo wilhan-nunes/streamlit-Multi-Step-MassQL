@@ -78,6 +78,10 @@ def check_classification_paths(matches, classification_tree):
 
     # Prepare results
     if all_matches:
+        if len(all_matches) >= 2 and all([lst[-1].endswith("stage2") for lst in all_matches]):
+            pass
+        elif len(all_matches) >= 2:
+            all_matches = [max(all_matches, key=len)]
         results = {
             'satisfied_paths': all_matches,
             'most_specific_path': max([lst for lst in all_matches], key=len),

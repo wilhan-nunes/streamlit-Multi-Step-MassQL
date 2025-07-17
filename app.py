@@ -283,14 +283,15 @@ if run_query or st.session_state.get("run_query_done"):
         ]["classification"].values[0]
 
         if isinstance(validation_lists, list):
-            selected_classification = st.selectbox(
-                "Select the classification to see:", validation_lists
-            )
-        else:
-            selected_classification = validation_lists
+            if len(validation_lists) >=2:
+                st.warning("This is potentially a chimeric spectrum since it was classified in more than one Stage2 query", icon='❗️')
+                selected_classification = st.selectbox(
+                    "Select the classification to see:", validation_lists
+                )
 
-        if len(validation_lists) >=2 and all([lst[-1].endswith("stage2") for lst in validation_lists]):
-            st.warning("This is potentially a chimeric spectrum since it was classified in more than one Stage2 query", icon='❗️')
+            else:
+                selected_classification = validation_lists[0]
+
 
 
         if selected_classification:

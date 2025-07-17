@@ -1,3 +1,5 @@
+from typing import List
+
 import plotly.graph_objects as go
 from utils import bile_acid_tree
 
@@ -127,7 +129,7 @@ class BileAcidTreeVisualizer:
 visualizer = BileAcidTreeVisualizer(bile_acid_tree)
 
 # Create specific diagram with custom path
-def create_custom_tree(custom_path, path_name="Custom Path"):
+def create_custom_tree(custom_path:List, path_name="Custom Path"):
     """Create diagram with custom highlighted path."""
     fig = visualizer.create_sankey_diagram(custom_path, f" - {path_name}")
     return fig
