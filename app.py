@@ -176,8 +176,10 @@ with st.sidebar:
 
     st.subheader("Documentations and Resources")
     st.markdown("""
-    [Feature Based Molecular Networking](https://wang-bioinformatics-lab.github.io/GNPS2_Documentation/fbmn/)
-    """
+    [Feature Based Molecular Networking](https://wang-bioinformatics-lab.github.io/GNPS2_Documentation/fbmn/)<br>
+    [MassQL documentation](https://mwang87.github.io/MassQueryLanguage_Documentation/)
+    """,
+                unsafe_allow_html=True
     )
 
 if not run_query and "run_query_done" not in st.session_state:
