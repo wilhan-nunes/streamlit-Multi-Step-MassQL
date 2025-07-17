@@ -253,7 +253,7 @@ if run_query:
 
 
 if run_query or st.session_state.get("run_query_done"):
-    st.title("Multi-step MassQL Results")
+    st.title("🔢 Multi-step MassQL Results")
     only_library_matches = st.session_state["only_library_matches"]
     full_table = st.session_state["full_table"]
     full_table["Compound_Name"] = full_table[

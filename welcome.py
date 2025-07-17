@@ -2,7 +2,7 @@ import streamlit as st
 
 
 def welcome_page():
-    st.title("Multi-step MassQL Bile Acid Isomer Annotation App")
+    st.title("🪜 Multi-step MassQL Bile Acid Isomer Annotation App")
     st.markdown("""
     ### 📖 Citation
     1. Ipsita Mohanty, Shipei Xing, Vanessa Castillo, Julius Agongo, Abubaker Patan, Yasin El Abiead, et al. 
