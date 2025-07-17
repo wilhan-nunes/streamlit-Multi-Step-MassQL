@@ -14,7 +14,8 @@ from utils import (
     filter_mgf_by_scans,
     MassQLQueries,
     bile_acid_tree,
-    add_df_and_filtering
+    add_df_and_filtering,
+    get_git_short_rev
 )
 from tree_plotter import create_custom_tree
 from tree_classifier import check_classification_paths
@@ -33,13 +34,17 @@ tri_queries = massql_queries.tri_queries
 page_title = "Multi-Step MassQL Bile Acid Isomer Annotation"
 
 # TODO: Bump version
-app_version = "2025-07-16"
+app_version = "2025-07-17"
+git_hash = get_git_short_rev()
+repo_link = "https://github.com/wilhan-nunes/streamlit-Multi-Step-MassQL"
 
 st.set_page_config(
     page_title=page_title,
     layout="wide",
-    # page_icon=":pill:",
-    menu_items={"About": ("**App version: %s**" % app_version)},
+    page_icon="🪜",
+    initial_sidebar_state="expanded",
+    menu_items={"About": (f"**App version**: {app_version} | "
+                          f"[**Git Hash**: {git_hash}]({repo_link}/commit/{git_hash})")},
 )
 
 

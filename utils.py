@@ -1,4 +1,5 @@
 import os
+import subprocess
 import uuid
 import logging
 from typing import List
@@ -18,6 +19,13 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     stream=logging.sys.stdout,
 )
+
+
+def get_git_short_rev():
+    try:
+        return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], stderr=subprocess.DEVNULL).decode().strip()
+    except subprocess.CalledProcessError:
+        return ".git/ not found"
 
 
 @dataclass
