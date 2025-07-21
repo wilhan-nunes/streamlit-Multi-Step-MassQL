@@ -7,6 +7,7 @@ from typing import List
 import gnpsdata
 import pandas as pd
 from gnpsdata import workflow_fbmn
+from streamlit.components.v1 import html
 
 import massql_launch
 from utils import (
@@ -47,6 +48,8 @@ st.set_page_config(
                           f"[**Git Hash**: {git_hash}]({repo_link}/commit/{git_hash})")},
 )
 
+# Add a tracking token
+html('<script async defer data-website-id="<your_website_id>" src="https://analytics.gnps2.org/umami.js"></script>', width=0, height=0)
 
 def process_results(massql_results_df: List, library_matches: pd.DataFrame, all_scans: List[str]):
     """
