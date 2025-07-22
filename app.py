@@ -130,7 +130,6 @@ def load_example_data():
         st.session_state.all_scans = [line.strip() for line in f]
 
 
-
 def get_bile_acids_classifications(results_df, exclude_string:str):
     passed_queries = results_df[
         ~results_df["query_validation"].str.contains(exclude_string, case=False)
@@ -154,7 +153,7 @@ with st.sidebar:
         task_id_value = "4e5f76ebc4c6481aba4461356f20bc35"
     else:
         task_id_value = ""
-    task_id = st.text_input("FBMN task ID:", value=task_id_value)
+    task_id = st.text_input("FBMN task ID:", value=task_id_value, disabled=load_example)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -277,7 +276,7 @@ if run_query or st.session_state.get("run_query_done"):
         ["👓 Visualizations", "🗂️ Classified", "📚 Library Matches", "📋 Full Table",]
     )
 
-    default_cols = ["#Scan#", "Compound_Name", 'classification', 'query_validation']
+    default_cols = ["#Scan#", "Compound_Name", 'classification']
 
     with viz_tab:
         st.subheader("Feature Classification")
