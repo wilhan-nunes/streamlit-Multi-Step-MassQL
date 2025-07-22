@@ -170,6 +170,8 @@ def get_bile_acids_classifications(results_df, exclude_string: str):
     return filtered_classifications
 
 
+task_id_value = st.query_params.get('task_id', '')
+
 with st.sidebar:
     st.subheader("Analysis configuration")
     load_example = st.checkbox(
@@ -177,8 +179,7 @@ with st.sidebar:
     )
     if load_example:
         task_id_value = "4e5f76ebc4c6481aba4461356f20bc35"
-    else:
-        task_id_value = ""
+
     task_id = st.text_input("FBMN task ID:", value=task_id_value, disabled=load_example)
 
     col1, col2 = st.columns(2)
