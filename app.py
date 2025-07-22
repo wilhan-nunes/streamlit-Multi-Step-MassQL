@@ -13,10 +13,11 @@ import massql_launch
 from utils import (
     download_and_filter_mgf,
     filter_mgf_by_scans,
+    highlight_hydroxy,
     MassQLQueries,
     bile_acid_tree,
     add_df_and_filtering,
-    get_git_short_rev
+    get_git_short_rev,
 )
 from tree_plotter import create_custom_tree
 from tree_classifier import check_classification_paths
@@ -44,14 +45,25 @@ st.set_page_config(
     layout="wide",
     page_icon="🪜",
     initial_sidebar_state="expanded",
-    menu_items={"About": (f"**App version**: {app_version} | "
-                          f"[**Git Hash**: {git_hash}]({repo_link}/commit/{git_hash})")},
+    menu_items={
+        "About": (
+            f"**App version**: {app_version} | "
+            f"[**Git Hash**: {git_hash}]({repo_link}/commit/{git_hash})"
+        )
+    },
 )
 
 # Add a tracking token
-html('<script async defer data-website-id="<your_website_id>" src="https://analytics.gnps2.org/umami.js"></script>', width=0, height=0)
+html(
+    '<script async defer data-website-id="<your_website_id>" src="https://analytics.gnps2.org/umami.js"></script>',
+    width=0,
+    height=0,
+)
 
-def process_results(massql_results_df: List, library_matches: pd.DataFrame, all_scans: List[str]):
+
+def process_results(
+    massql_results_df: List, library_matches: pd.DataFrame, all_scans: List[str]
+):
     """
     Process results and include scans without library matches in full_table output.
 
@@ -80,27 +92,39 @@ def process_results(massql_results_df: List, library_matches: pd.DataFrame, all_
         all_scans_df = pd.DataFrame({"#Scan#": [str(scan) for scan in all_scans]})
 
         # Merge everything: all_scans -> library_matches -> query_results
-        full_table = (all_scans_df
-                      .merge(library_matches, on="#Scan#", how="left")
-                      .merge(all_query_results_df, on="#Scan#", how="left"))
+        full_table = all_scans_df.merge(library_matches, on="#Scan#", how="left").merge(
+            all_query_results_df, on="#Scan#", how="left"
+        )
 
         # Fill missing values
-        full_table["query_validation"] = full_table["query_validation"].fillna("Did not pass stage1 filtering")
+        full_table["query_validation"] = full_table["query_validation"].fillna(
+            "Did not pass stage1 filtering"
+        )
 
         # Library matches only (existing functionality)
-        library_matches_only = library_matches.merge(all_query_results_df, on="#Scan#", how="left")
+        library_matches_only = library_matches.merge(
+            all_query_results_df, on="#Scan#", how="left"
+        )
 
         # Reorder columns and aggregate
-        cols = ["query_validation", "Compound_Name"] + [col for col in full_table.columns
-                                                        if col not in ["query_validation", "Compound_Name"]]
+        cols = ["query_validation", "Compound_Name"] + [
+            col
+            for col in full_table.columns
+            if col not in ["query_validation", "Compound_Name"]
+        ]
         full_table = full_table[cols]
 
         # Group by scan and aggregate
-        full_table = full_table.groupby("#Scan#", as_index=False).agg({
-            "query_validation": lambda x: ";".join(set(x.dropna())),
-            **{col: "first" for col in full_table.columns
-               if col not in ["#Scan#", "query_validation"]}
-        })
+        full_table = full_table.groupby("#Scan#", as_index=False).agg(
+            {
+                "query_validation": lambda x: ";".join(set(x.dropna())),
+                **{
+                    col: "first"
+                    for col in full_table.columns
+                    if col not in ["#Scan#", "query_validation"]
+                },
+            }
+        )
 
     return library_matches_only, full_table, all_query_results_df
 
@@ -130,7 +154,7 @@ def load_example_data():
         st.session_state.all_scans = [line.strip() for line in f]
 
 
-def get_bile_acids_classifications(results_df, exclude_string:str):
+def get_bile_acids_classifications(results_df, exclude_string: str):
     passed_queries = results_df[
         ~results_df["query_validation"].str.contains(exclude_string, case=False)
     ]
@@ -148,7 +172,9 @@ def get_bile_acids_classifications(results_df, exclude_string:str):
 
 with st.sidebar:
     st.subheader("Analysis configuration")
-    load_example = st.checkbox("Load query example", value=False, key="load_example_checkbox")
+    load_example = st.checkbox(
+        "Load query example", value=False, key="load_example_checkbox"
+    )
     if load_example:
         task_id_value = "4e5f76ebc4c6481aba4461356f20bc35"
     else:
@@ -182,11 +208,12 @@ with st.sidebar:
     )
 
     st.subheader("Documentations and Resources")
-    st.markdown("""
+    st.markdown(
+        """
     [Feature Based Molecular Networking](https://wang-bioinformatics-lab.github.io/GNPS2_Documentation/fbmn/)<br>
     [MassQL documentation](https://mwang87.github.io/MassQueryLanguage_Documentation/)
     """,
-                unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 if not run_query and "run_query_done" not in st.session_state:
@@ -203,9 +230,7 @@ if run_query:
             mgf_path = cleaned_mgf_path
 
         with st.spinner("Running Stage 1 queries..."):
-            stage1_all_results = massql_launch.run_massql(
-                mgf_path, queries_dict=stage1
-            )
+            stage1_all_results = massql_launch.run_massql(mgf_path, queries_dict=stage1)
             stage1_results_df = pd.DataFrame(stage1_all_results)
             # create a new mgf filtering to just maintain the scans that passed stage1
             scans_to_keep = set(sum(stage1_results_df["scan_list"], []))
@@ -230,9 +255,9 @@ if run_query:
     else:
         # this function stores the static result file dataframes in st.session_state, just as above.
         load_example_data()
-        all_mgf_scans = st.session_state.get('all_scans')
-        massql_results_df =st.session_state.get('massql_results_df')
-        library_matches =st.session_state.get('library_matches')
+        all_mgf_scans = st.session_state.get("all_scans")
+        massql_results_df = st.session_state.get("massql_results_df")
+        library_matches = st.session_state.get("library_matches")
 
     with st.spinner("Processing tables..."):
         (
@@ -247,7 +272,6 @@ if run_query:
         # only_library_matches.to_csv('example_library_matches.csv', index=False)
         # all_query_results_df.to_csv('example_all_results.csv', index=False)
 
-
         # Store results in session state
         st.session_state["only_library_matches"] = only_library_matches
         st.session_state["full_table"] = full_table
@@ -258,25 +282,38 @@ if run_query or st.session_state.get("run_query_done"):
     st.title("🔢 Multi-step MassQL Results")
     only_library_matches = st.session_state["only_library_matches"]
     full_table = st.session_state["full_table"]
-    full_table["Compound_Name"] = full_table[
-        "Compound_Name"
-    ].fillna("No match")
+    full_table["Compound_Name"] = full_table["Compound_Name"].fillna("No match")
 
-    filtered_classifications = get_bile_acids_classifications(full_table, exclude_string="did not pass")
+    filtered_classifications = get_bile_acids_classifications(
+        full_table, exclude_string="did not pass"
+    )
     if len(filtered_classifications) > 0:
-        feature_ids_dict = filtered_classifications[["#Scan#", "Compound_Name"]].astype(str)
-        feature_ids_dict = feature_ids_dict.set_index("#Scan#")["Compound_Name"].to_dict()
-        feature_ids_dict = dict(sorted(feature_ids_dict.items(), key=lambda item: item[1]))
+        feature_ids_dict = filtered_classifications[["#Scan#", "Compound_Name"]].astype(
+            str
+        )
+        feature_ids_dict = feature_ids_dict.set_index("#Scan#")[
+            "Compound_Name"
+        ].to_dict()
+        feature_ids_dict = dict(
+            sorted(feature_ids_dict.items(), key=lambda item: item[1])
+        )
     else:
-        st.warning("No classifications retrieved for this task ID. Inspect the full table below for details")
+        st.warning(
+            "No classifications retrieved for this task ID. Inspect the full table below for details"
+        )
         st.write(full_table)
         st.stop()
 
     viz_tab, class_tab, lib_tab, full_tab = st.tabs(
-        ["👓 Visualizations", "🗂️ Classified", "📚 Library Matches", "📋 Full Table",]
+        [
+            "👓 Visualizations",
+            "🗂️ Classified",
+            "📚 Library Matches",
+            "📋 Full Table",
+        ]
     )
 
-    default_cols = ["#Scan#", "Compound_Name", 'classification']
+    default_cols = ["#Scan#", "Compound_Name", "classification"]
 
     with viz_tab:
         st.subheader("Feature Classification")
@@ -292,8 +329,11 @@ if run_query or st.session_state.get("run_query_done"):
         ]["classification"].values[0]
 
         if isinstance(validation_lists, list):
-            if len(validation_lists) >=2:
-                st.warning("This is potentially a chimeric spectrum since it was classified in more than one Stage2 query", icon='❗️')
+            if len(validation_lists) >= 2:
+                st.warning(
+                    "This is potentially a chimeric spectrum since it was classified in more than one Stage2 query",
+                    icon="❗️",
+                )
                 selected_classification = st.selectbox(
                     "Select the classification to see:", validation_lists
                 )
@@ -301,26 +341,47 @@ if run_query or st.session_state.get("run_query_done"):
             else:
                 selected_classification = validation_lists[0]
 
-
-
         if selected_classification:
             ba_tree_fig = create_custom_tree(selected_classification, selected_feature)
             st.plotly_chart(ba_tree_fig)
 
     with class_tab:
-        add_df_and_filtering(filtered_classifications, key_prefix="class_table", default_cols=default_cols)
+        class_df = add_df_and_filtering(
+            filtered_classifications,
+            key_prefix="class_table",
+            default_cols=default_cols,
+        )
+        st.dataframe(class_df.style.apply(highlight_hydroxy, subset=['classification']))
         with st.expander("How to interpret this table"):
-            st.markdown("""
+            st.markdown(
+                """
             The **"classification"** column displays the queries that support the compound's annotation as the most likely isomer.  
             The **"query_validation"** column lists all queries that matched a given spectra (scan).
-            """)
+            """
+            )
 
     with lib_tab:
-        only_library_matches = only_library_matches.merge(filtered_classifications[['#Scan#', 'classification']], on='#Scan#', how='left')
-        only_library_matches = only_library_matches[default_cols + [col for col in only_library_matches.columns if col not in default_cols]]
-        add_df_and_filtering(only_library_matches, key_prefix="lib_matches")
+        only_library_matches = only_library_matches.merge(
+            filtered_classifications[["#Scan#", "classification"]],
+            on="#Scan#",
+            how="left",
+        )
+        only_library_matches = only_library_matches[
+            default_cols
+            + [col for col in only_library_matches.columns if col not in default_cols]
+        ]
+        library_df = add_df_and_filtering(only_library_matches, key_prefix="lib_matches")
+        st.dataframe(library_df)
 
     with full_tab:
-        full_table = full_table.merge(filtered_classifications[['#Scan#', 'classification']], on='#Scan#', how='left')
-        full_table = full_table[default_cols + [col for col in full_table.columns if col not in default_cols]]
-        add_df_and_filtering(full_table, key_prefix="full")
+        full_table = full_table.merge(
+            filtered_classifications[["#Scan#", "classification"]],
+            on="#Scan#",
+            how="left",
+        )
+        full_table = full_table[
+            default_cols
+            + [col for col in full_table.columns if col not in default_cols]
+        ]
+        full_df = add_df_and_filtering(full_table, key_prefix="full")
+        st.dataframe(full_df)

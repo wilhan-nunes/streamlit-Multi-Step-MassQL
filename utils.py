@@ -128,7 +128,7 @@ def filter_mgf_by_scans(input_mgf_path, output_mgf_path, scans_to_keep):
     return output_mgf_path
 
 
-def add_df_and_filtering(df, key_prefix:str, default_cols: List = None):
+def add_df_and_filtering(df, key_prefix:str, default_cols: List = None) -> pd.DataFrame:
     # Session state for tracking number of filters
     if f"{key_prefix}_filter_count" not in st.session_state:
         st.session_state[f"{key_prefix}_filter_count"] = 1
@@ -172,8 +172,23 @@ def add_df_and_filtering(df, key_prefix:str, default_cols: List = None):
                                           label_visibility='collapsed')
     else:
         cols_to_show = all_cols
-    st.dataframe(filtered_df[cols_to_show])
 
+    return filtered_df[cols_to_show]
+
+
+def highlight_hydroxy(s):
+    styles = []
+    for v in s:
+        v_str = str(v)
+        if 'Trihydroxy' in v_str:
+            styles.append('color: #4287f5')  # blue
+        elif 'Dihydroxy' in v_str:
+            styles.append('color: #ae0775')  # purple
+        elif 'Monohydroxy' in v_str:
+            styles.append('color: #18b760')  # green
+        else:
+            styles.append('')
+    return styles
 
 if __name__ == "__main__":
     task_id = "4e5f76ebc4c6481aba4461356f20bc35"
