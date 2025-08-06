@@ -60,7 +60,7 @@ def check_classification_paths(matches, classification_tree):
         path_without_category = path[1:]
 
         # Find the most complete match by checking from full path backwards
-        for i in range(1, len(path_without_category)):
+        for i in range(1, len(path_without_category)+1):
             current_subset = path_without_category[:i]
 
             # Check if this subset of the path has all elements in matches
