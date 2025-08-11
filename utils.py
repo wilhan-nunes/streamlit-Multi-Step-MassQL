@@ -4,12 +4,11 @@ import uuid
 import logging
 from typing import List
 
-from streamlit import cache_data
 from dataclasses import dataclass
 
 import pandas as pd
 import yaml
-from gnpsdata import workflow_fbmn
+from gnpsdata import workflow_fbmn, taskinfo, taskresult
 
 import massql_launch
 import streamlit as st
@@ -46,14 +45,22 @@ class MassQLQueries:
 with open('bile_acid_tree.yaml', 'r') as file:
     bile_acid_tree = yaml.safe_load(file)
 
-@cache_data
+@st.cache_data
 def download_and_filter_mgf(task_id: str) -> (str, str):
     os.makedirs("temp_mgf", exist_ok=True)
-    unique_uuid = str(uuid.uuid4())
-    mgf_file_path = f"temp_mgf/{unique_uuid}_mgf_all.mgf"
+    mgf_file_path = f"temp_mgf/{task_id}_mgf_all.mgf"
 
     logging.info("Downloading mgf...")
-    workflow_fbmn.download_mgf(task_id, mgf_file_path)
+    task_info = taskinfo.get_task_information(task_id)
+    workflowname = task_info.get('workflowname')
+    if workflowname == 'feature_based_molecular_networking_workflow':
+        fbmn_download_mgf_wrapper(mgf_file_path, task_id)
+    elif workflowname == 'classical_networking_workflow':
+        gnps2_download_resultfile_wrapper(mgf_file_path, task_id)
+    else:
+        logging.error(f"Unsupported workflow: {workflowname}. Cannot download MGF.")
+        raise ValueError(f"Unsupported workflow: {workflowname}. Cannot download MGF.")
+
     logging.info(f"MGF saved to {mgf_file_path}")
 
     logging.info("Starting MGF filtering...")
@@ -82,7 +89,7 @@ def download_and_filter_mgf(task_id: str) -> (str, str):
         else:
             cleaned_mgf_lines.append(line)
     # Save the cleaned MGF file
-    cleaned_mgf = f"temp_mgf/{unique_uuid}_mgf_cleaned.mgf"
+    cleaned_mgf = f"temp_mgf/{task_id}_mgf_cleaned.mgf"
     with open(cleaned_mgf, "w") as fout:
         fout.writelines(cleaned_mgf_lines)
     logging.info(f"Cleaned MGF saved to {cleaned_mgf}")
@@ -96,7 +103,17 @@ def download_and_filter_mgf(task_id: str) -> (str, str):
     return cleaned_mgf, scans_list
 
 
-@cache_data
+@st.cache_data
+def gnps2_download_resultfile_wrapper(mgf_file_path, task_id):
+    return taskresult.download_gnps2_task_resultfile(task_id, "nf_output/clustering/specs_ms.mgf", mgf_file_path)
+
+
+@st.cache_data
+def fbmn_download_mgf_wrapper(mgf_file_path, task_id):
+    return workflow_fbmn.download_mgf(task_id, mgf_file_path)
+
+
+@st.cache_data
 def filter_mgf_by_scans(input_mgf_path, output_mgf_path, scans_to_keep):
     """
     Write a new MGF file containing only the scans in scans_to_keep.

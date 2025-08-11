@@ -180,7 +180,8 @@ with st.sidebar:
     if load_example:
         task_id_value = "4e5f76ebc4c6481aba4461356f20bc35"
 
-    task_id = st.text_input("FBMN task ID:", value=task_id_value, disabled=load_example)
+    task_id = st.text_input("Task ID:", value=task_id_value, disabled=load_example,
+                            help="Enter a valid GNPS task ID (Feature Based or Classical MN) to run the analysis.")
 
     col1, col2 = st.columns(2)
     with col1:
