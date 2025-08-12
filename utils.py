@@ -2,6 +2,7 @@ import os
 import subprocess
 import uuid
 import logging
+from io import StringIO
 from typing import List
 
 from dataclasses import dataclass
@@ -213,6 +214,68 @@ def highlight_hydroxy(s):
         else:
             styles.append('')
     return styles
+
+
+def insert_mgf_info(task: str, input_mgf: str, validation_df: pd.DataFrame) -> StringIO:
+    print(f"Inserting MGF info for task {task}...")
+
+    mask = validation_df["query_validation"] != "Did not pass stage1 filtering"
+    valid_scans = set(
+        pd.to_numeric(validation_df.loc[mask, "#Scan#"], errors="coerce")
+        .dropna().astype(int).tolist()
+    )
+    scan_to_validation = {
+        int(k): v for k, v in zip(
+            pd.to_numeric(validation_df["#Scan#"], errors="coerce").fillna(-1).astype(int),
+            validation_df["classification"]
+        ) if k != -1
+    }
+
+    buffer = StringIO()
+    spectrum_lines = []
+    skip_spectrum = False
+    print(f"Processing MGF file: {input_mgf}")
+    print(f"Filtering to {len(valid_scans)} scans that passed validation (out of {len(validation_df)} total scans)")
+
+    file_contents = open(input_mgf, "r").readlines()
+    for line in file_contents:
+        if line.startswith("BEGIN IONS"):
+            spectrum_lines = [line]
+            skip_spectrum = False
+        elif line.startswith("SCANS"):
+            scan_number = int(line.split("=")[1].strip())
+            spectrum_lines.append(line)
+
+            if scan_number not in valid_scans:
+                skip_spectrum = True
+                continue
+
+            validation_status = scan_to_validation.get(scan_number, "Unknown")
+
+            insert_string = f"MASSQL_VALIDATION={validation_status}\n"
+
+            for prev_line in spectrum_lines[:-1]:
+                buffer.write(prev_line)
+            buffer.write(insert_string)
+            buffer.write(line)
+            spectrum_lines = []
+
+        elif line.startswith("END IONS"):
+            if not skip_spectrum:
+                spectrum_lines.append(line)
+                for spectrum_line in spectrum_lines:
+                    buffer.write(spectrum_line)
+            spectrum_lines = []
+        else:
+            if not skip_spectrum:
+                if spectrum_lines:
+                    spectrum_lines.append(line)
+                else:
+                    buffer.write(line)
+    print(f"Processed {input_mgf}")
+    buffer.seek(0)
+    return buffer
+
 
 if __name__ == "__main__":
     task_id = "4e5f76ebc4c6481aba4461356f20bc35"

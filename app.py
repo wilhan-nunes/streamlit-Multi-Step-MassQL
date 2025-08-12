@@ -17,7 +17,7 @@ from utils import (
     MassQLQueries,
     bile_acid_tree,
     add_df_and_filtering,
-    get_git_short_rev, gnps2_download_resultfile_wrapper, gnps2_get_library_match_dataframe,
+    get_git_short_rev, gnps2_download_resultfile_wrapper, gnps2_get_library_match_dataframe, insert_mgf_info,
 )
 from tree_plotter import create_custom_tree
 from tree_classifier import check_classification_paths
@@ -392,3 +392,19 @@ if run_query or st.session_state.get("run_query_done"):
         ]
         full_df = add_df_and_filtering(full_table, key_prefix="full")
         st.dataframe(full_df)
+
+    st.markdown("---")
+    st.subheader("Download MGF with validated scans")
+
+    if st.button("Generate MGF with validated scans", type="secondary", icon=":material/manufacturing:"):
+        input_mgf = f'./temp_mgf/{task_id}_stg1_passed.mgf' if not load_example else "examples/example_stg1_passed.mgf"
+        buf = insert_mgf_info(task_id, input_mgf,
+                              full_table[["#Scan#", "query_validation", "classification"]].astype(str))
+        st.download_button(
+            label="Download validated MGF",
+            data=buf.getvalue(),
+            file_name=f"{task_id}_validated_scans.mgf",
+            mime="txt/plain",
+            icon=":material/download:",
+            type="primary",
+        )
