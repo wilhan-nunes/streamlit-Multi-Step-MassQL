@@ -6,7 +6,7 @@ from typing import List
 
 import gnpsdata
 import pandas as pd
-from gnpsdata import workflow_fbmn
+from gnpsdata import workflow_fbmn, taskinfo
 from streamlit.components.v1 import html
 
 import massql_launch
@@ -17,7 +17,7 @@ from utils import (
     MassQLQueries,
     bile_acid_tree,
     add_df_and_filtering,
-    get_git_short_rev,
+    get_git_short_rev, gnps2_download_resultfile_wrapper, gnps2_get_library_match_dataframe,
 )
 from tree_plotter import create_custom_tree
 from tree_classifier import check_classification_paths
@@ -227,7 +227,12 @@ if run_query:
     st.session_state["run_query_done"] = True
     if not load_example:
         with st.spinner("Downloading files..."):
-            library_matches = workflow_fbmn.get_library_match_dataframe(task_id)
+            task_info = taskinfo.get_task_information(task_id)
+            workflowname = task_info.get('workflowname')
+            if workflowname == 'feature_based_molecular_networking_workflow':
+                library_matches = workflow_fbmn.get_library_match_dataframe(task_id)
+            elif workflowname == 'classical_networking_workflow':
+                library_matches = gnps2_get_library_match_dataframe(task_id)
             cleaned_mgf_path, all_mgf_scans = download_and_filter_mgf(task_id)
             mgf_path = cleaned_mgf_path
 

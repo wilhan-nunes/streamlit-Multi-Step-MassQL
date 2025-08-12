@@ -107,6 +107,10 @@ def download_and_filter_mgf(task_id: str) -> (str, str):
 def gnps2_download_resultfile_wrapper(mgf_file_path, task_id):
     return taskresult.download_gnps2_task_resultfile(task_id, "nf_output/clustering/specs_ms.mgf", mgf_file_path)
 
+@st.cache_data
+def gnps2_get_library_match_dataframe(task_id):
+    return taskresult.get_gnps2_task_resultfile_dataframe(task_id, "nf_output/library/merged_results_with_gnps.tsv")
+
 
 @st.cache_data
 def fbmn_download_mgf_wrapper(mgf_file_path, task_id):
