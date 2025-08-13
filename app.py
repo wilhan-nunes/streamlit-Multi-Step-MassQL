@@ -18,6 +18,7 @@ from utils import (
     bile_acid_tree,
     add_df_and_filtering,
     get_git_short_rev, gnps2_download_resultfile_wrapper, gnps2_get_library_match_dataframe, insert_mgf_info,
+    insert_plot_download_button,
 )
 from tree_plotter import create_custom_tree
 from tree_classifier import check_classification_paths
@@ -350,7 +351,9 @@ if run_query or st.session_state.get("run_query_done"):
 
         if selected_classification:
             ba_tree_fig = create_custom_tree(selected_classification, selected_feature)
+            svg_bytes = ba_tree_fig.to_image(format="svg", width=1300, height=600, scale=1)
             st.plotly_chart(ba_tree_fig)
+            insert_plot_download_button("bile_acid_tree", svg_bytes, "tree")
 
     with class_tab:
         class_df = add_df_and_filtering(

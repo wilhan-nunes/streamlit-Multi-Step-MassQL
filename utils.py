@@ -294,3 +294,14 @@ if __name__ == "__main__":
 
     stage1_passed_mgf = filter_mgf_by_scans(mgf_path, f"temp_mgf/{uuid.uuid4()}_scans_passed_stg1.mgf",
                                             scans_to_keep)
+
+
+def insert_plot_download_button(identifier, svg_data, key_prefix):
+    col1, col2, _, _ = st.columns(4)
+    col1.download_button(
+        label=":material/download: Download Plot as SVG",
+        data=svg_data,
+        file_name=f"{identifier}.svg",
+        mime="image/svg+xml",  # Set the MIME type to SVG
+        key=f'{key_prefix}_svg_download'
+    )
