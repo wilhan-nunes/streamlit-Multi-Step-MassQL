@@ -23,7 +23,15 @@ def welcome_page():
        - It then performs a set of secondary, more specific MassQL queries only on the remaining spectra.
     3. **Library Match Integration**: The results from MassQL are merged with GNPS library matches from the FBMN job.
     4. **Classification**: A bile acid classification tree is used to assign query results to specific bile acid subclasses/isomers.
-    
+    """)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image('ba_tree_mono_tri.png', caption='Mono and Trihydroxy Bile Acid Ontology Tree')
+    with col2:
+        st.image('ba_tree_di.png', caption='Dihydroxy Bile Acid Ontology Tree')
+
+    st.markdown("""
     ### 🧩 Features
     - 👓 Visual classification of features using an interactive bile acid ontology tree
     - 📚 Explore GNPS Library matches and full annotated results
