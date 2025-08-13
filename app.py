@@ -352,7 +352,7 @@ if run_query or st.session_state.get("run_query_done"):
         if selected_classification:
             ba_tree_fig = create_custom_tree(selected_classification, selected_feature)
             svg_bytes = ba_tree_fig.to_image(format="svg", width=1300, height=600, scale=1)
-            st.plotly_chart(ba_tree_fig)
+            st.plotly_chart(ba_tree_fig, config = {'toImageButtonOptions': { 'height': None, 'width': None, 'format': 'svg' }})
             insert_plot_download_button("bile_acid_tree", svg_bytes, "tree")
 
     with class_tab:
