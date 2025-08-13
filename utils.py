@@ -1,24 +1,14 @@
 import os
-import subprocess
-import uuid
-import logging
+from dataclasses import dataclass
 from io import StringIO
 from typing import List
 
-from dataclasses import dataclass
-
 import pandas as pd
+import streamlit as st
 import yaml
 from gnpsdata import workflow_fbmn, taskinfo, taskresult
 
 import massql_launch
-import streamlit as st
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    stream=logging.sys.stdout,
-)
 
 
 def get_git_short_rev():
@@ -46,12 +36,13 @@ class MassQLQueries:
 with open('bile_acid_tree.yaml', 'r') as file:
     bile_acid_tree = yaml.safe_load(file)
 
+
 @st.cache_data
 def download_and_filter_mgf(task_id: str) -> (str, str):
     os.makedirs("temp_mgf", exist_ok=True)
     mgf_file_path = f"temp_mgf/{task_id}_mgf_all.mgf"
 
-    logging.info("Downloading mgf...")
+    print("Downloading mgf...")
     task_info = taskinfo.get_task_information(task_id)
     workflowname = task_info.get('workflowname')
     if workflowname == 'feature_based_molecular_networking_workflow':
@@ -59,12 +50,12 @@ def download_and_filter_mgf(task_id: str) -> (str, str):
     elif workflowname == 'classical_networking_workflow':
         gnps2_download_resultfile_wrapper(mgf_file_path, task_id)
     else:
-        logging.error(f"Unsupported workflow: {workflowname}. Cannot download MGF.")
+        print(f"Unsupported workflow: {workflowname}. Cannot download MGF.")
         raise ValueError(f"Unsupported workflow: {workflowname}. Cannot download MGF.")
 
-    logging.info(f"MGF saved to {mgf_file_path}")
+    print(f"MGF saved to {mgf_file_path}")
 
-    logging.info("Starting MGF filtering...")
+    print("Starting MGF filtering...")
     ## Extract all scan numbers from the MGF file
     scans_list = []
     with open(mgf_file_path, "r") as mgf_file:
@@ -93,7 +84,7 @@ def download_and_filter_mgf(task_id: str) -> (str, str):
     cleaned_mgf = f"temp_mgf/{task_id}_mgf_cleaned.mgf"
     with open(cleaned_mgf, "w") as fout:
         fout.writelines(cleaned_mgf_lines)
-    logging.info(f"Cleaned MGF saved to {cleaned_mgf}")
+    print(f"Cleaned MGF saved to {cleaned_mgf}")
 
     # Extract all scan numbers from the cleaned MGF file
     with open(cleaned_mgf, "r") as mgf_file:
@@ -107,6 +98,7 @@ def download_and_filter_mgf(task_id: str) -> (str, str):
 @st.cache_data
 def gnps2_download_resultfile_wrapper(mgf_file_path, task_id):
     return taskresult.download_gnps2_task_resultfile(task_id, "nf_output/clustering/specs_ms.mgf", mgf_file_path)
+
 
 @st.cache_data
 def gnps2_get_library_match_dataframe(task_id):
@@ -149,11 +141,11 @@ def filter_mgf_by_scans(input_mgf_path, output_mgf_path, scans_to_keep):
                     kept_scans += 1
             else:
                 block_lines.append(line)
-    logging.info(f"Total Scans: {total_scans} ** Kept: {kept_scans} scans ** Excluded: {total_scans - kept_scans}")
+    print(f"Total Scans: {total_scans} ** Kept: {kept_scans} scans ** Excluded: {total_scans - kept_scans}")
     return output_mgf_path
 
 
-def add_df_and_filtering(df, key_prefix:str, default_cols: List = None) -> pd.DataFrame:
+def add_df_and_filtering(df, key_prefix: str, default_cols: List = None) -> pd.DataFrame:
     # Session state for tracking number of filters
     if f"{key_prefix}_filter_count" not in st.session_state:
         st.session_state[f"{key_prefix}_filter_count"] = 1
@@ -177,11 +169,11 @@ def add_df_and_filtering(df, key_prefix:str, default_cols: List = None) -> pd.Da
         col1, col2 = st.columns([1, 2])
         with col1:
             selected_col = st.selectbox(
-                f"Column {i+1}", df.columns, key=f"{key_prefix}_col_select_{i}"
+                f"Column {i + 1}", df.columns, key=f"{key_prefix}_col_select_{i}"
             )
         with col2:
             search_term = st.text_input(
-                f"Contains (Column {i+1})", key=f"{key_prefix}_search_input_{i}"
+                f"Contains (Column {i + 1})", key=f"{key_prefix}_search_input_{i}"
             )
 
         if selected_col and search_term:
@@ -292,7 +284,7 @@ if __name__ == "__main__":
     stage1_results_df = pd.DataFrame(stage1_all_results)
     scans_to_keep = set(sum(stage1_results_df['scan_list'], []))
 
-    stage1_passed_mgf = filter_mgf_by_scans(mgf_path, f"temp_mgf/{uuid.uuid4()}_scans_passed_stg1.mgf",
+    stage1_passed_mgf = filter_mgf_by_scans(mgf_path, f"temp_mgf/{task_id}_scans_passed_stg1.mgf",
                                             scans_to_keep)
 
 
