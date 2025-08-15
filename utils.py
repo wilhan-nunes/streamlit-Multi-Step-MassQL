@@ -41,6 +41,17 @@ with open('bile_acid_tree.yaml', 'r') as file:
 def download_and_filter_mgf(task_id: str) -> (str, str):
     os.makedirs("temp_mgf", exist_ok=True)
     mgf_file_path = f"temp_mgf/{task_id}_mgf_all.mgf"
+    cleaned_mgf = f"temp_mgf/{task_id}_mgf_cleaned.mgf"
+
+    # Skip if cleaned file already exists
+    if os.path.exists(cleaned_mgf):
+        print(f"Skipping download, using existing file: {cleaned_mgf}")
+        scans_list = []
+        with open(cleaned_mgf, "r") as mgf_file:
+            for line in mgf_file:
+                if line.startswith("SCANS="):
+                    scans_list.append(line.strip().split("=")[1])
+        return cleaned_mgf, scans_list
 
     print("Downloading mgf...")
     task_info = taskinfo.get_task_information(task_id)
@@ -80,8 +91,7 @@ def download_and_filter_mgf(task_id: str) -> (str, str):
             current_scan.append(line)
         else:
             cleaned_mgf_lines.append(line)
-    # Save the cleaned MGF file
-    cleaned_mgf = f"temp_mgf/{task_id}_mgf_cleaned.mgf"
+
     with open(cleaned_mgf, "w") as fout:
         fout.writelines(cleaned_mgf_lines)
     print(f"Cleaned MGF saved to {cleaned_mgf}")
