@@ -182,7 +182,7 @@ with st.sidebar:
         task_id_value = "4e5f76ebc4c6481aba4461356f20bc35"
 
     task_id = st.text_input("Task ID:", value=task_id_value, disabled=load_example,
-                            help="Enter a valid GNPS task ID (Feature Based or Classical MN) to run the analysis.")
+                            help="Enter a valid GNPS task ID (Feature Based or Classical MN) to run the analysis.").strip()
 
     col1, col2 = st.columns(2)
     with col1:
@@ -242,11 +242,25 @@ if run_query:
             stage1_results_df = pd.DataFrame(stage1_all_results)
             # create a new mgf filtering to just maintain the scans that passed stage1
             scans_to_keep = set(sum(stage1_results_df["scan_list"], []))
-            stage1_passed_mgf = filter_mgf_by_scans(
-                mgf_path,
-                f"temp_mgf/{task_id}_stg1_passed.mgf",
-                scans_to_keep,
-            )
+            
+            # Check if any scans passed stage1
+            if len(scans_to_keep) == 0:
+                st.error("⚠️ No scans passed Stage 1 filtering. Cannot proceed with analysis.")
+                st.info("This might indicate that your data doesn't match the Stage 1 query criteria.")
+                st.stop()
+            
+            st.info(f"Stage 1 complete: {len(scans_to_keep)} scans passed the initial filtering.")
+            
+            try:
+                stage1_passed_mgf = filter_mgf_by_scans(
+                    mgf_path,
+                    f"temp_mgf/{task_id}_stg1_passed.mgf",
+                    scans_to_keep,
+                )
+            except ValueError as e:
+                st.error(f"⚠️ Error creating filtered MGF file: {str(e)}")
+                st.error("This may indicate malformed data in the MGF file.")
+                st.stop()
 
         with st.spinner(
             "Running MassQL for filtered scans... This may take a while, please be patient!"
@@ -254,9 +268,15 @@ if run_query:
             container = st.empty()
             with container:
                 # Run all queries for the filtered data
-                massql_results_df = massql_launch.run_massql(
-                    stage1_passed_mgf, ALL_MASSQL_QUERIES
-                )
+                try:
+                    massql_results_df = massql_launch.run_massql(
+                        stage1_passed_mgf, ALL_MASSQL_QUERIES
+                    )
+                except Exception as e:
+                    st.error(f"⚠️ Error running MassQL queries: {str(e)}")
+                    st.error(f"This occurred for task: {task_id}")
+                    st.error("The MGF file may contain malformed data that cannot be processed.")
+                    st.stop()
 
         cleanup_massql_files()
 
@@ -398,17 +418,21 @@ if run_query or st.session_state.get("run_query_done"):
         st.dataframe(full_df)
 
     st.markdown("---")
-    st.subheader("Download MGF with validated scans")
+    @st.fragment
+    def download_validated_mgf():
+        st.subheader("Download MGF with validated scans")
 
-    if st.button("Generate MGF with validated scans", type="secondary", icon=":material/manufacturing:"):
-        input_mgf = f'./temp_mgf/{task_id}_stg1_passed.mgf' if not load_example else "examples/example_stg1_passed.mgf"
-        buf = insert_mgf_info(task_id, input_mgf,
-                              full_table[["#Scan#", "query_validation", "classification"]].astype(str))
-        st.download_button(
-            label="Download validated MGF",
-            data=buf.getvalue(),
-            file_name=f"{task_id}_validated_scans.mgf",
-            mime="txt/plain",
-            icon=":material/download:",
-            type="primary",
-        )
+        if st.button("Generate MGF with validated scans", type="secondary", icon=":material/manufacturing:"):
+            input_mgf = f'./temp_mgf/{task_id}_stg1_passed.mgf' if not load_example else "examples/example_stg1_passed.mgf"
+            buf = insert_mgf_info(task_id, input_mgf,
+                                full_table[["#Scan#", "query_validation", "classification"]].astype(str))
+            st.download_button(
+                label="Download validated MGF",
+                data=buf.getvalue(),
+                file_name=f"{task_id}_validated_scans.mgf",
+                mime="txt/plain",
+                icon=":material/download:",
+                type="primary",
+            )
+
+    download_validated_mgf()

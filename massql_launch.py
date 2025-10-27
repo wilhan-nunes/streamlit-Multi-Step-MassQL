@@ -9,13 +9,29 @@ def run_massql(mgf_path: str, queries_dict: dict):
     logger = logging.getLogger(__name__)
     executed_queries = []
     all_query_results_list = []
+    
+    # First, validate the MGF file exists and is readable
+    import os
+    if not os.path.exists(mgf_path):
+        logger.error(f"MGF file not found: {mgf_path}")
+        raise FileNotFoundError(f"MGF file not found: {mgf_path}")
+    
+    logger.info(f"Processing MGF file: {mgf_path}")
+    
     for query_name, query_string in queries_dict.items():
         logger.info(f"Running query: {query_name}")
         executed_queries.append(query_name)
         try:
             results_df = msql_engine.process_query(query_string, mgf_path, parallel=True)
-        except KeyError:
-            logger.error(f"KeyError encountered for query: {query_name}")
+        except KeyError as e:
+            logger.error(f"KeyError encountered for query: {query_name}: {str(e)}")
+            results_df = pd.DataFrame()
+        except (TypeError, ValueError) as e:
+            logger.error(f"Data format error for query {query_name}: {str(e)}")
+            logger.error(f"This may indicate malformed data in the MGF file: {mgf_path}")
+            results_df = pd.DataFrame()
+        except Exception as e:
+            logger.error(f"Unexpected error for query {query_name}: {type(e).__name__}: {str(e)}")
             results_df = pd.DataFrame()
 
         if len(results_df) == 0:

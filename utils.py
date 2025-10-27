@@ -131,13 +131,21 @@ def filter_mgf_by_scans(input_mgf_path, output_mgf_path, scans_to_keep):
     scans_to_keep = set(str(s) for s in scans_to_keep)
     total_scans = 0
     kept_scans = 0
+    
+    # Validate input file exists
+    if not os.path.exists(input_mgf_path):
+        raise FileNotFoundError(f"Input MGF file not found: {input_mgf_path}")
+    
     with open(input_mgf_path, "r") as infile, open(output_mgf_path, "w") as outfile:
         write_block = False
         block_lines = []
+        has_valid_peaks = False
+        
         for line in infile:
             if line.strip() == "BEGIN IONS":
                 block_lines = [line]
                 write_block = False
+                has_valid_peaks = False
             elif line.startswith("SCANS="):
                 total_scans += 1
                 scan_num = line.strip().split("=")[1]
@@ -146,12 +154,37 @@ def filter_mgf_by_scans(input_mgf_path, output_mgf_path, scans_to_keep):
                 block_lines.append(line)
             elif line.strip() == "END IONS":
                 block_lines.append(line)
-                if write_block:
+                # Only write if we have valid peaks
+                if write_block and has_valid_peaks:
                     outfile.writelines(block_lines)
                     kept_scans += 1
+                elif write_block and not has_valid_peaks:
+                    print(f"Warning: Skipping scan block with no valid peaks")
             else:
                 block_lines.append(line)
+                # Check if this line looks like a valid peak (two numbers separated by space/tab)
+                if write_block and line.strip() and not line.startswith(("TITLE=", "PEPMASS=", "CHARGE=", "RTINSECONDS=", "MSLEVEL=")):
+                    parts = line.strip().split()
+                    if len(parts) == 2:
+                        try:
+                            float(parts[0])
+                            float(parts[1])
+                            has_valid_peaks = True
+                        except ValueError:
+                            pass
+    
     print(f"Total Scans: {total_scans} ** Kept: {kept_scans} scans ** Excluded: {total_scans - kept_scans}")
+    
+    # Validate output file
+    if kept_scans == 0:
+        print(f"WARNING: No scans were kept in the filtered MGF file!")
+        print(f"Scans to keep: {len(scans_to_keep)} scans")
+        print(f"First few scans requested: {list(scans_to_keep)[:10]}")
+    
+    # Check if the output file has any content
+    if os.path.getsize(output_mgf_path) == 0:
+        raise ValueError(f"Filtered MGF file is empty! No scans matched the filter criteria.")
+    
     return output_mgf_path
 
 
