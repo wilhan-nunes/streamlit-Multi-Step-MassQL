@@ -1,5 +1,5 @@
 git+https://github.com/Wang-Bioinformatics-Lab/GNPSDataPackage.git
-streamlit
+streamlit==1.50.0
 requests
 pandas
 massql
