@@ -2,3 +2,4 @@
 source_files
 ignored_files
 temp_mgf/*
+__pycache__

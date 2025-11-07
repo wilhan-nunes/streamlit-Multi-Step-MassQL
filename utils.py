@@ -305,5 +305,6 @@ def insert_plot_download_button(identifier, svg_data, key_prefix):
         data=svg_data,
         file_name=f"{identifier}.svg",
         mime="image/svg+xml",  # Set the MIME type to SVG
-        key=f'{key_prefix}_svg_download'
+        key=f'{key_prefix}_svg_download',
+        type="primary"
     )
