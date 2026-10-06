@@ -4,6 +4,7 @@ from io import StringIO
 from typing import List
 
 import pandas as pd
+import requests
 import streamlit as st
 import yaml
 from gnpsdata import workflow_fbmn, taskinfo, taskresult
@@ -112,7 +113,17 @@ def gnps2_download_resultfile_wrapper(mgf_file_path, task_id):
 
 @st.cache_data
 def gnps2_get_library_match_dataframe(task_id):
-    return taskresult.get_gnps2_task_resultfile_dataframe(task_id, "nf_output/library/merged_results_with_gnps.tsv")
+    # Fetched with requests rather than gnpsdata's pd.read_csv(url): GNPS2 answers
+    # urllib's default User-Agent with 403, which gnpsdata swallows and returns None.
+    result_path = "nf_output/library/merged_results_with_gnps.tsv"
+    for server in ["https://gnps2.org", "https://beta.gnps2.org", "https://de.gnps2.org"]:
+        try:
+            response = requests.get(f"{server}/resultfile", params={"task": task_id, "file": result_path}, timeout=120)
+        except requests.RequestException:
+            continue
+        if response.ok:
+            return pd.read_csv(StringIO(response.text), sep="\t")
+    raise RuntimeError(f"Could not download the library matches ({result_path}) for task {task_id}")
 
 
 @st.cache_data
