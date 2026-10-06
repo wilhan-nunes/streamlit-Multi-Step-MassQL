@@ -166,7 +166,7 @@ def process_task_pipeline(task_id: str):
     task_info = taskinfo.get_task_information(task_id)
     workflowname = task_info.get("workflowname")
     if workflowname == "feature_based_molecular_networking_workflow":
-        library_matches = workflow_fbmn.get_library_match_dataframe(task_id)
+        library_matches = gnps2_get_library_match_dataframe(task_id)
     elif workflowname == "classical_networking_workflow":
         library_matches = gnps2_get_library_match_dataframe(task_id)
 
