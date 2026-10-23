@@ -6,8 +6,8 @@ def welcome_page():
     st.markdown("""
     ### 📖 Citation
     1. Ipsita Mohanty, Shipei Xing, Vanessa Castillo, Julius Agongo, Abubaker Patan, Yasin El Abiead, et al. 
-    **MS/MS Mass Spectrometry Filtering Tree for Bile Acid Isomer Annotation**
-    bioRxiv 2025.03.04.641505; doi: https://doi.org/10.1101/2025.03.04.641505
+    **MS/MS Mass Spectrometry Filtering Tree for Bile Acid Regio- and Stereoisomer Annotation**
+    *Analytical Chemistry* 98(6), 4571–4584 (2026); doi: https://doi.org/10.1021/acs.analchem.5c05677
     2. Damiani, T., Jarmusch, A.K., Aron, A.T. et al. 
     **A universal language for finding mass spectrometry data patterns**. 
     Nat Methods 22, 1247–1254 (2025). https://doi.org/10.1038/s41592-025-02660-z
